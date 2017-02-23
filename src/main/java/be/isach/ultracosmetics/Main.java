@@ -214,7 +214,7 @@ public class Main extends JavaPlugin {
     /**
      * Instance.
      */
-    private static Main core;
+    private static Main main;
 
     /**
      * Server NMS version.
@@ -348,7 +348,7 @@ public class Main extends JavaPlugin {
         log("Configuration loaded.");
         log("");
 
-        core = this;
+        main = this;
 
         log("Initializing module " + serverVersion);
         versionManager = new VersionManager(serverVersion);
@@ -578,7 +578,7 @@ public class Main extends JavaPlugin {
      * @return
      */
     public static Main getInstance() {
-        return core;
+        return main;
     }
 
     /**
@@ -942,7 +942,7 @@ public class Main extends JavaPlugin {
     }
 
     public static int index(OfflinePlayer p) {
-        return db.connection.getIndexId(p);
+        return UltraPlayer.getIndexId(p);
     }
 
     public static void openMainMenuFromOther(Player whoClicked) {

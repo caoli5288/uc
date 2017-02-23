@@ -26,8 +26,7 @@ public class PlayerManager {
     public UltraPlayer get(Player player) {
         UltraPlayer p = new UltraPlayer(player);
         handle.put(player.getUniqueId(), p);
-        if (!Main.getInstance().usingFileStorage())
-            Main.db.init(p);
+        if (!Main.getInstance().usingFileStorage()) Main.db.init(p);
         return p;
     }
 

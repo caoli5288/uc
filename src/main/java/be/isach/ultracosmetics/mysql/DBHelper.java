@@ -2,11 +2,11 @@ package be.isach.ultracosmetics.mysql;
 
 import be.isach.ultracosmetics.$;
 import be.isach.ultracosmetics.UltraPlayer;
+import lombok.val;
 import org.bukkit.entity.Player;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
-import java.sql.DatabaseMetaData;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 
 /**
@@ -17,10 +17,7 @@ import java.sql.SQLException;
  */
 public class DBHelper {
 
-    public DBConnection connection;
-    private boolean name;
-    private boolean gadget;
-    private boolean selfMorphView;
+    private DBConnection connection;
 
     public DBHelper(DBConnection manager) {
         this.connection = manager;
@@ -41,59 +38,49 @@ public class DBHelper {
                 if (!username.equals(p.getName())) {
                     connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
                 }
-                connection.putIndexId(p, b.result.getInt("id"));
+                UltraPlayer.putIndexId(p, b.result.getInt("id"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    public Table query() {
+        return connection.query();
+    }
+
+    /**
+     * @return always not {@code null} for upsource code safe
+     */
     public String getPetName(int index, String pet) {
         L2 l2 = L2Pool.get(index);
-        String p = l2.getPet(pet);
+        String p = l2.getPetName(pet);
         if ($.nil(p)) {
-            if (!this.name) {
-                try {
-                    DatabaseMetaData d = connection.conn().getMetaData();
-                    try (ResultSet result = d.getColumns(null, null, "UltraCosmeticsData", "name" + pet)) {
-                        if (!result.next()) {
-                            PreparedStatement statement = connection.conn().prepareStatement("ALTER TABLE UltraCosmeticsData ADD name" + pet + " varchar(255)");
-                            statement.executeUpdate();
-                            statement.close();
+            try (SelectQuery.Binding b = connection.query().select("pet_name").where("id", index).execute()) {
+                l2.setPetName(pet, null); // magic pre-init handled map
+                if (b.result.next()) {
+                    val raw = b.result.getString("pet_name");
+                    if (!$.nil(raw)) {
+                        JSONObject object = (JSONObject) JSONValue.parse(raw);
+                        if (!($.nil(object) || object.isEmpty())) {
+                            object.forEach(l2::setPetName);
                         }
                     }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-                this.name = true;
-            }
-            try (SelectQuery.Binding b = connection.query().select().where("id", index).execute()) {
-                if (b.result.next()) {
-                    p = b.result.getString("name" + pet);
+                    p = l2.getPetName(pet);
                 }
             } catch (SQLException e) {
                 $.log(e);
             }
-            l2.setPet(pet, $.nil(p) ? "" : p);
         }
-        return p.isEmpty() ? null : p;
+        return $.valid(p, "");
     }
 
     public void setPetName(int index, String pet, String name) {
+        val ignore = getPetName(index, pet); // pre-load
         try {
-            DatabaseMetaData d = connection.conn().getMetaData();
-            if (!this.name) {
-                try (ResultSet result = d.getColumns(null, null, "UltraCosmeticsData", "name" + pet)) {
-                    if (!result.next()) {
-                        PreparedStatement statement = connection.conn().prepareStatement("ALTER TABLE UltraCosmeticsData ADD name" + pet + " varchar(255)");
-                        statement.executeUpdate();
-                        statement.close();
-                    }
-                }
-                this.name = true;
-            }
-            connection.query().update().set("name" + pet, name).where("id", index).execute();
-            L2Pool.get(index).setPet(pet, name);
+            L2 l2 = L2Pool.get(index);
+            l2.setPetName(pet, name);
+            connection.query().update().set("pet_name", l2.getPetValue()).where("id", index).execute();
         } catch (SQLException e) {
             $.log(e);
         }
@@ -103,7 +90,7 @@ public class DBHelper {
         L2 l2 = L2Pool.get(index);
         int key = l2.getKey();
         if (key == -1) {
-            try (SelectQuery.Binding b = connection.query().select().where("id", index).execute()) {
+            try (SelectQuery.Binding b = connection.query().select("treasureKeys").where("id", index).execute()) {
                 if (b.result.next()) {
                     key = b.result.getInt("treasureKeys");
                 }
@@ -116,7 +103,11 @@ public class DBHelper {
     }
 
     public void setKey(int index, int value) {
-        connection.query().update().set("treasureKeys", value).where("id", index).execute();
+        try {
+            connection.query().update().set("treasureKeys", value).where("id", index).execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         L2Pool.get(index).setKey(value);
     }
 
@@ -146,7 +137,11 @@ public class DBHelper {
     }
 
     public void setAmmo(int index, String name, int value) {
-        connection.query().update().set(name.replace("_", ""), value).where("id", index).execute();
+        try {
+            connection.query().update().set(name.replace("_", ""), value).where("id", index).execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         L2Pool.get(index).setAmmo(name, value);
     }
 
@@ -159,26 +154,15 @@ public class DBHelper {
     }
 
     public void save(L2 l2) {
-        connection.query().update().set("gadgetsEnabled", l2.getGadget()).where("id", l2.getIndex()).execute();
-    }
-
-    public void setGadgetsEnabled(int index, boolean enabled) {
         try {
-            if (!this.gadget) {
-                DatabaseMetaData d = connection.conn().getMetaData();
-                try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "gadgetsEnabled")) {
-                    if (!r.next()) {
-                        PreparedStatement statement = connection.conn().prepareStatement("ALTER TABLE UltraCosmeticsData ADD gadgetsEnabled INT NOT NULL DEFAULT 1");
-                        statement.executeUpdate();
-                        statement.close();
-                    }
-                }
-                this.gadget = true;
-            }
-            L2Pool.get(index).setGadget(enabled ? 1 : 0);
+            connection.query().update().set("gadgetsEnabled", l2.getGadget()).where("id", l2.getId()).execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setGadgetsEnabled(int index, boolean b) {
+        L2Pool.get(index).setGadget(b ? 1 : 0);
     }
 
     public boolean hasGadgetsEnabled(int index) {
@@ -187,18 +171,7 @@ public class DBHelper {
         if (gadget == -1) {
             try {
                 gadget = 1; // set default value at first
-                if (!this.gadget) {
-                    DatabaseMetaData d = connection.conn().getMetaData();
-                    try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "gadgetsEnabled")) {
-                        if (!r.next()) {
-                            PreparedStatement statement = connection.conn().prepareStatement("ALTER TABLE UltraCosmeticsData ADD gadgetsEnabled INT NOT NULL DEFAULT 1");
-                            statement.executeUpdate();
-                            statement.close();
-                        }
-                    }
-                    this.gadget = true;
-                }
-                try (SelectQuery.Binding b = connection.query().select().where("id", index).execute()) {
+                try (SelectQuery.Binding b = connection.query().select("gadgetsEnabled").where("id", index).execute()) {
                     if (b.result.next()) {
                         gadget = b.result.getInt("gadgetsEnabled");
                     }
@@ -213,17 +186,6 @@ public class DBHelper {
 
     public void setSeeSelfMorph(int index, boolean enabled) {
         try {
-            if (!this.selfMorphView) {
-                DatabaseMetaData d = connection.conn().getMetaData();
-                try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "selfmorphview")) {
-                    if (!r.next()) {
-                        PreparedStatement statement = connection.conn().prepareStatement("ALTER TABLE UltraCosmeticsData ADD selfmorphview INT NOT NULL DEFAULT 1");
-                        statement.executeUpdate();
-                        statement.close();
-                    }
-                }
-                this.selfMorphView = true;
-            }
             connection.query().update().set("selfmorphview", enabled ? 1 : 0).where("id", index).execute();
             L2Pool.get(index).setSelfMorphView(enabled ? 1 : 0);
         } catch (SQLException e) {
@@ -237,18 +199,7 @@ public class DBHelper {
         if (selfMorphView == -1) {
             try {
                 selfMorphView = 1; // default 1
-                if (!this.selfMorphView) {
-                    DatabaseMetaData d = connection.conn().getMetaData();
-                    try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "selfmorphview")) {
-                        if (!r.next()) {
-                            PreparedStatement statement = connection.conn().prepareStatement("ALTER TABLE UltraCosmeticsData ADD selfmorphview INT NOT NULL DEFAULT 1");
-                            statement.executeUpdate();
-                            statement.close();
-                        }
-                    }
-                    this.selfMorphView = true;
-                }
-                try (SelectQuery.Binding b = connection.query().select().where("id", index).execute()) {
+                try (SelectQuery.Binding b = connection.query().select("selfmorphview").where("id", index).execute()) {
                     if (b.result.next()) {
                         selfMorphView = b.result.getInt("selfmorphview");
                     }

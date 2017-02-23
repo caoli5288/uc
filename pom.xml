@@ -61,6 +61,11 @@
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/spigot-1.10-R0.1-SNAPSHOT.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>[1.16.8,)</version>
+        </dependency>
     </dependencies>
 
     <build>

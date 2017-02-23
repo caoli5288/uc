@@ -32,7 +32,7 @@ public class L2Pool {
     }
 
     public static void del(L2 l2) {
-        POOL.pool.remove(l2.getIndex());
+        POOL.pool.remove(l2.getId());
     }
 
 }

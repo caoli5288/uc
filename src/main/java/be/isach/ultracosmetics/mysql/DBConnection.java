@@ -4,7 +4,6 @@ import be.isach.ultracosmetics.$;
 import be.isach.ultracosmetics.config.SettingsManager;
 import be.isach.ultracosmetics.cosmetics.gadgets.GadgetType;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -12,9 +11,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Package: be.isach.ultracosmetics.mysql
@@ -23,8 +19,6 @@ import java.util.UUID;
  * Project: UltraCosmetics
  */
 public class DBConnection {
-
-    private static final Map<UUID, Integer> INDEX = new HashMap<>();
 
     /**
      * MySQL Connection & Table.
@@ -43,8 +37,8 @@ public class DBConnection {
             try (Statement st = connection.createStatement()) {
                 st.executeUpdate(TABLE);
             }
+            DatabaseMetaData d = connection.getMetaData();
             for (GadgetType gadgetType : GadgetType.values()) {
-                DatabaseMetaData d = connection.getMetaData();
                 try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", gadgetType.toString().replace("_", "").toLowerCase())) {
                     if (!r.next()) {
                         try (PreparedStatement st = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD " + gadgetType.toString().replace("_", "").toLowerCase() + " INTEGER DEFAULT 0 not NULL")) {
@@ -53,11 +47,33 @@ public class DBConnection {
                     }
                 }
             }
-            DatabaseMetaData md = connection.getMetaData();
-            ResultSet rs = md.getColumns(null, null, "UltraCosmeticsData", "treasureKeys");
-            if (!rs.next()) {
-                PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD treasureKeys INTEGER DEFAULT 0 NOT NULL");
-                statement.executeUpdate();
+            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "gadgetsEnabled")) {
+                if (!r.next()) {
+                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD gadgetsEnabled INT NOT NULL DEFAULT 1");
+                    statement.executeUpdate();
+                    statement.close();
+                }
+            }
+            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "selfmorphview")) {
+                if (!r.next()) {
+                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD selfmorphview INT NOT NULL DEFAULT 1");
+                    statement.executeUpdate();
+                    statement.close();
+                }
+            }
+            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "treasureKeys")) {
+                if (!r.next()) {
+                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD treasureKeys INTEGER DEFAULT 0 NOT NULL");
+                    statement.executeUpdate();
+                    statement.close();
+                }
+            }
+            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "pet_name")) {
+                if (!r.next()) {
+                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD pet_name TEXT");
+                    statement.executeUpdate();
+                    statement.close();
+                }
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -100,23 +116,6 @@ public class DBConnection {
             connect();
         }
         return connection;
-    }
-
-    public int getIndexId(OfflinePlayer p) {
-        Integer i = INDEX.get(p.getUniqueId());
-        if ($.nil(i)) {
-            try (SelectQuery.Binding b = query().select().where("uuid", p.getUniqueId() + "").execute()) {
-                i = b.getResult().getInt("id");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-            INDEX.put(p.getUniqueId(), i);
-        }
-        return $.nil(i) ? -1 : i;
-    }
-
-    public void putIndexId(OfflinePlayer p, int i) {
-        INDEX.put(p.getUniqueId(), i);
     }
 
 }

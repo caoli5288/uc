@@ -1,6 +1,6 @@
 package be.isach.ultracosmetics;
 
-import java.sql.SQLException;
+import java.util.logging.Level;
 
 /**
  * Created on 17-2-22.
@@ -11,12 +11,12 @@ public class $ {
         return any == null;
     }
 
-    public static int valid(Integer i, int def) {
+    public static <T> T valid(T i, T def) {
         return nil(i) ? def : i;
     }
 
-    public static void log(Throwable i) {
-        i.printStackTrace();
+    public static void log(Exception exc) {
+        Main.getInstance().getLogger().log(Level.SEVERE, exc.getMessage(), exc);
     }
 
 }

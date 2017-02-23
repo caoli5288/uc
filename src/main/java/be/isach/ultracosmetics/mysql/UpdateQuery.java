@@ -55,15 +55,13 @@ public class UpdateQuery extends Query {
         return this;
     }
 
-    public void execute() {
+    public void execute() throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             int i = 1;
             for (Object object : values) {
                 statement.setObject(i++, object);
             }
             statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 

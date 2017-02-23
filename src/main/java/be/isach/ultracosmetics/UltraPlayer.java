@@ -14,31 +14,31 @@ import be.isach.ultracosmetics.cosmetics.pets.Pet;
 import be.isach.ultracosmetics.cosmetics.suits.ArmorSlot;
 import be.isach.ultracosmetics.cosmetics.suits.Suit;
 import be.isach.ultracosmetics.cosmetics.treasurechests.TreasureChest;
+import be.isach.ultracosmetics.mysql.SelectQuery;
 import be.isach.ultracosmetics.util.ItemFactory;
 import me.libraryaddict.disguise.DisguiseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 
+import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class UltraPlayer {
 
+    private static final Map<UUID, Integer> INDEX = new HashMap<>(); // TODO not flush yet, change if any issue
+
     private Player player;
-    /**
-     * Player UUID.
-     */
     public UUID id;
 
-    /**
-     * Current Cosmetics.
-     */
     public Gadget currentGadget;
     public Mount currentMount;
     public ParticleEffect currentParticleEffect;
@@ -46,21 +46,22 @@ public class UltraPlayer {
     public TreasureChest currentTreasureChest;
     public Morph currentMorph;
     public Hat currentHat;
-    public Suit currentHelmet,
-            currentChestplate,
-            currentLeggings,
-            currentBoots;
+    public Suit currentHelmet;
+    public Suit currentChestplate;
+    public Suit currentLeggings;
+    public Suit currentBoots;
+
     public Emote currentEmote;
 
     /**
      * boolean to identify if player is loaded correctly
      */
-    public boolean loaded;
+    private boolean loaded;
 
     /**
      * Cooldown map storing all the current cooldowns for gadgets.
      */
-    private HashMap<GadgetType, Long> gadgetCooldowns = null;
+    private HashMap<GadgetType, Long> cooldown;
 
     /**
      * Allows to store custom data for each player easily.
@@ -71,7 +72,7 @@ public class UltraPlayer {
         try {
             this.id = player.getUniqueId();
 
-            gadgetCooldowns = new HashMap<>();
+            cooldown = new HashMap<>();
 
             if (Main.getInstance().usingFileStorage())
                 SettingsManager.getData(getPlayer()).addDefault("Keys", 0);
@@ -101,7 +102,7 @@ public class UltraPlayer {
      * @return -1 if player can use, otherwise the time left (in seconds).
      */
     public double canUse(GadgetType gadget) {
-        Object count = gadgetCooldowns.get(gadget);
+        Object count = cooldown.get(gadget);
         if (count == null)
             return -1;
         if (System.currentTimeMillis() > (long) count)
@@ -117,7 +118,7 @@ public class UltraPlayer {
      * @param countdown The cooldown to set.
      */
     public void setCoolDown(GadgetType gadget, double countdown) {
-        gadgetCooldowns.put(gadget, (long) (countdown * 1000 + System.currentTimeMillis()));
+        cooldown.put(gadget, (long) (countdown * 1000 + System.currentTimeMillis()));
     }
 
     /**
@@ -144,6 +145,7 @@ public class UltraPlayer {
         }
     }
 
+
     /**
      * Removes the current emote.
      */
@@ -157,7 +159,6 @@ public class UltraPlayer {
             currentEmote = null;
         }
     }
-
 
     /**
      * Removes the current Mount.
@@ -425,9 +426,9 @@ public class UltraPlayer {
             if (Main.getInstance().usingFileStorage()) {
                 return SettingsManager.getData(getPlayer()).get("Pet-Names." + petName);
             } else {
-                if (Main.db.getPetName(index(), petName).equalsIgnoreCase("Unknown"))
-                    return null;
-                return Main.db.getPetName(index(), petName);
+                String out = Main.db.getPetName(index(), petName);// always not null
+                if (out.isEmpty() || out.equalsIgnoreCase("Unknown")) return null;
+                return out;
             }
         } catch (NullPointerException e) {
             return null;
@@ -624,7 +625,24 @@ public class UltraPlayer {
     }
 
     public int index() {
-        return Main.db.connection.getIndexId(player);
+        return getIndexId(player);
+    }
+
+    public static int getIndexId(OfflinePlayer p) {
+        Integer i = INDEX.get(p.getUniqueId());
+        if ($.nil(i)) {
+            try (SelectQuery.Binding b = Main.db.query().select("id").where("uuid", p.getUniqueId() + "").execute()) {
+                i = b.getResult().getInt("id");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            INDEX.put(p.getUniqueId(), i);
+        }
+        return $.valid(i, -1);
+    }
+
+    public static void putIndexId(OfflinePlayer p, int i) {
+        INDEX.put(p.getUniqueId(), i);
     }
 
 }

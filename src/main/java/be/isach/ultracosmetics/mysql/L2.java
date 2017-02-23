@@ -1,6 +1,7 @@
 package be.isach.ultracosmetics.mysql;
 
 import be.isach.ultracosmetics.$;
+import org.json.simple.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,14 +12,15 @@ import java.util.Map;
 public class L2 {
 
     private final Map<String, Integer> ammo = new HashMap<>();
-    private final Map<String, String> p = new HashMap<>();
-    private final int index;
+    private final int id;
     private int gadget = -1;
     private int selfMorphView = -1;
     private int key = -1;
 
-    public L2(int index) {
-        this.index = index;
+    private JSONObject p;
+
+    public L2(int id) {
+        this.id = id;
     }
 
     public int getGadget() {
@@ -37,12 +39,23 @@ public class L2 {
         this.selfMorphView = selfMorphView;
     }
 
-    public String getPet(String pet) {
-        return p.get(pet);
+    public String getPetName(String pet) {// Magic func
+        if ($.nil(p)) return null;
+        return $.valid((String) p.get(pet), "");
     }
 
-    public void setPet(String pet, String name) {
-        p.put(pet, name);
+    @SuppressWarnings("all")
+    public void setPetName(Object pet, Object name) {
+        if ($.nil(p)) p = new JSONObject();
+        if ($.nil(name) || String.valueOf(name).isEmpty()) {
+            p.remove(pet, name);
+        } else {
+            p.put(pet, name);
+        }
+    }
+
+    public String getPetValue() {
+        return $.nil(p) ? "{}" : String.valueOf(p);
     }
 
     public int getKey() {
@@ -61,8 +74,8 @@ public class L2 {
         return $.valid(ammo.put(name, value), -1);
     }
 
-    public int getIndex() {
-        return index;
+    public int getId() {
+        return id;
     }
 
 }
