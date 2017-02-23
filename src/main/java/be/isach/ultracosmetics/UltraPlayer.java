@@ -14,8 +14,8 @@ import be.isach.ultracosmetics.cosmetics.pets.Pet;
 import be.isach.ultracosmetics.cosmetics.suits.ArmorSlot;
 import be.isach.ultracosmetics.cosmetics.suits.Suit;
 import be.isach.ultracosmetics.cosmetics.treasurechests.TreasureChest;
-import be.isach.ultracosmetics.mysql.SelectQuery;
 import be.isach.ultracosmetics.util.ItemFactory;
+import lombok.val;
 import me.libraryaddict.disguise.DisguiseAPI;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -631,12 +631,13 @@ public class UltraPlayer {
     public static int getIndexId(OfflinePlayer p) {
         Integer i = INDEX.get(p.getUniqueId());
         if ($.nil(i)) {
-            try (SelectQuery.Binding b = Main.db.query().select("id").where("uuid", p.getUniqueId() + "").execute()) {
-                i = b.getResult().getInt("id");
+            try (val b = Main.db.query().select("id").where("uuid", p.getUniqueId() + "").execute()) {
+                if (b.getResult().next()) {
+                    INDEX.put(p.getUniqueId(), (i = b.getResult().getInt("id")));
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
-            INDEX.put(p.getUniqueId(), i);
         }
         return $.valid(i, -1);
     }

@@ -1,6 +1,7 @@
 package be.isach.ultracosmetics.mysql;
 
 import be.isach.ultracosmetics.$;
+import be.isach.ultracosmetics.Main;
 import be.isach.ultracosmetics.UltraPlayer;
 import lombok.val;
 import org.bukkit.entity.Player;
@@ -26,7 +27,7 @@ public class DBHelper {
     public void init(UltraPlayer player) {
         Player p = player.getPlayer();
         if (!UltraPlayer.INDEX.containsKey(p.getUniqueId())) {
-            try (SelectQuery.Binding b = connection.query().select().where("uuid", p.getUniqueId().toString()).execute()) {
+            try (val b = connection.query().select().where("uuid", p.getUniqueId().toString()).execute()) {
                 if (!b.result.next()) {
                     connection.query().insert().insert("uuid").value(p.getUniqueId().toString()).execute();
                     connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
@@ -58,7 +59,7 @@ public class DBHelper {
         L2 l2 = L2Pool.get(index);
         String p = l2.getPetName(pet);
         if ($.nil(p)) {
-            try (SelectQuery.Binding b = connection.query().select("pet_name").where("id", index).execute()) {
+            try (val b = connection.query().select("pet_name").where("id", index).execute()) {
                 l2.setPetName(pet, null); // magic pre-init handled map
                 if (b.result.next()) {
                     val raw = b.result.getString("pet_name");
@@ -92,7 +93,7 @@ public class DBHelper {
         L2 l2 = L2Pool.get(index);
         int key = l2.getKey();
         if (key == -1) {
-            try (SelectQuery.Binding b = connection.query().select("treasureKeys").where("id", index).execute()) {
+            try (val b = connection.query().select("treasureKeys").where("id", index).execute()) {
                 if (b.result.next()) {
                     key = b.result.getInt("treasureKeys");
                 }
@@ -122,29 +123,33 @@ public class DBHelper {
     }
 
     public int getAmmo(int index, String name) {
+        val col = name.replace("_", "");
         L2 l2 = L2Pool.get(index);
-        int result = l2.getAmmo(name);
+        int result = l2.getAmmo(col);
         if (result == -1) {
-            String col = name.replace("_", "");
-            try (SelectQuery.Binding b = connection.query().select(col).where("id", index).execute()) {
+            try (val b = connection.query().select(col).where("id", index).execute()) {
                 if (b.result.next()) {
                     result = b.result.getInt(col);
+                } else {
+                    result = 0;
                 }
+                Main.debug("DEBUG #2 " + index + " " + name + " " + result);
             } catch (SQLException e) {
-                e.printStackTrace();
+                $.log(e);
             }
-            l2.setAmmo(name, result == -1 ? 0 : result);
+            l2.setAmmo(name, result);
         }
         return result;
     }
 
     public void setAmmo(int index, String name, int value) {
+        val col = name.replace("_", "");
         try {
-            connection.query().update().set(name.replace("_", ""), value).where("id", index).execute();
+            connection.query().update().set(col, value).where("id", index).execute();
         } catch (SQLException e) {
             $.log(e);
         }// Update l2cache even if db update failed
-        L2Pool.get(index).setAmmo(name, value);
+        L2Pool.get(index).setAmmo(col, value);
     }
 
     public void removeAmmo(int index, String name) {
@@ -173,7 +178,7 @@ public class DBHelper {
         if (gadget == -1) {
             try {
                 gadget = 1; // set default value at first
-                try (SelectQuery.Binding b = connection.query().select("gadgetsEnabled").where("id", index).execute()) {
+                try (val b = connection.query().select("gadgetsEnabled").where("id", index).execute()) {
                     if (b.result.next()) {
                         gadget = b.result.getInt("gadgetsEnabled");
                     }
@@ -201,7 +206,7 @@ public class DBHelper {
         if (selfMorphView == -1) {
             try {
                 selfMorphView = 1; // default 1
-                try (SelectQuery.Binding b = connection.query().select("selfmorphview").where("id", index).execute()) {
+                try (val b = connection.query().select("selfmorphview").where("id", index).execute()) {
                     if (b.result.next()) {
                         selfMorphView = b.result.getInt("selfmorphview");
                     }

@@ -3,6 +3,7 @@ package be.isach.ultracosmetics.mysql;
 import be.isach.ultracosmetics.$;
 import be.isach.ultracosmetics.config.SettingsManager;
 import be.isach.ultracosmetics.cosmetics.gadgets.GadgetType;
+import lombok.val;
 import org.bukkit.Bukkit;
 
 import java.sql.Connection;
@@ -38,10 +39,10 @@ public class DBConnection {
                 st.executeUpdate(TABLE);
             }
             DatabaseMetaData d = connection.getMetaData();
-            for (GadgetType gadgetType : GadgetType.values()) {
-                try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", gadgetType.toString().replace("_", "").toLowerCase())) {
+            for (val type : GadgetType.values()) {
+                try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", type.toString().replace("_", "").toLowerCase())) {
                     if (!r.next()) {
-                        try (PreparedStatement st = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD " + gadgetType.toString().replace("_", "").toLowerCase() + " INTEGER DEFAULT 0 not NULL")) {
+                        try (PreparedStatement st = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD " + type.toString().replace("_", "").toLowerCase() + " INTEGER DEFAULT 0 not NULL")) {
                             st.executeUpdate();
                         }
                     }

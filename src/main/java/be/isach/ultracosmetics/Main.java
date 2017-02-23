@@ -385,6 +385,8 @@ public class Main extends JavaPlugin {
             debug = true;
         }
 
+        if (getConfig().getBoolean("debug")) debug = true;
+
         log("");
         log("Registering Messages...");
         new MessageManager();
@@ -573,7 +575,7 @@ public class Main extends JavaPlugin {
      * @return if debug is turned on or off.
      */
     public static boolean debug(Object message) {
-        if (debug) Bukkit.broadcastMessage("§c§lUC-DEBUG> §f" + message.toString());
+        if (debug) Bukkit.getConsoleSender().sendMessage("§c§lUC-DEBUG> §f" + message.toString());
         return debug;
     }
 
