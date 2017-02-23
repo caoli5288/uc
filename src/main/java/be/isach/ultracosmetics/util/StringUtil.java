@@ -41,36 +41,32 @@ public class StringUtil {
 	 * @return
 	 */
 	public static boolean isConfirming(String string){
-		return match(string, new String[]{
-			"on",
-			"true",
-			"yes",
-			"allow",
-			"positive",
-			"enable",
-			"enabled",
-			"confirm",
-			"confirmed"
-		});
-	}
+        return match(string, "on",
+                "true",
+                "yes",
+                "allow",
+                "positive",
+                "enable",
+                "enabled",
+                "confirm",
+                "confirmed");
+    }
 	/**
 	 * Checks whether the given string is a rejecting word
 	 * @param string
 	 * @return
 	 */
 	public static boolean isRejecting(String string){
-		return match(string, new String[]{
-			"off",
-			"false",
-			"no",
-			"deny",
-			"negative",
-			"disable",
-			"disabled",
-			"reject",
-			"rejected"
-		});
-	}
+        return match(string, "off",
+                "false",
+                "no",
+                "deny",
+                "negative",
+                "disable",
+                "disabled",
+                "reject",
+                "rejected");
+    }
 	
 	/**
 	 * Counts the amount of times a certain

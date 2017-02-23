@@ -1,5 +1,7 @@
 package be.isach.ultracosmetics.mysql;
 
+import be.isach.ultracosmetics.$;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -11,8 +13,6 @@ import java.util.List;
 public class SelectQuery extends Query {
     private boolean and;
 
-    private PreparedStatement statement;
-
     private final List<Object> values;
 
     public SelectQuery(Connection connection, String sql) {
@@ -20,7 +20,7 @@ public class SelectQuery extends Query {
 
         and = false;
 
-        values = new ArrayList<Object>();
+        values = new ArrayList<>();
     }
 
     public SelectQuery where(String key, Object value) {
@@ -60,6 +60,7 @@ public class SelectQuery extends Query {
             try {
                 result.close();
             } catch (SQLException e) {
+                $.log(e);
             }
             statement.close();
         }
@@ -68,29 +69,16 @@ public class SelectQuery extends Query {
 
     public Binding execute() {
         try {
-            statement = connection.prepareStatement(sql);
-
+            PreparedStatement statement = connection.prepareStatement(sql);
             int i = 1;
-
             for (Object object : values) {
-                statement.setObject(i, object);
-
-                i++;
+                statement.setObject(i++, object);
             }
-
             return new Binding(statement, statement.executeQuery());
         } catch (SQLException e) {
-            e.printStackTrace();
-
-            return null;
+            $.log(e);
         }
+        return null;
     }
 
-    public void close() {
-        try {
-            statement.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
 }

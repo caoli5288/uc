@@ -57,7 +57,7 @@ public class SuitManager implements Listener {
                 for (int h = from; h <= to; h++) {
                     if (h > SuitType.enabled().size())
                         break;
-                    SuitType suit = (SuitType) SuitType.enabled().get(h - 1);
+                    SuitType suit = SuitType.enabled().get(h - 1);
                     if (!suit.isEnabled()) continue;
                     boolean shouldIncrement = false;
                     for (int d = 0; d < ArmorSlot.values().length; d++) {

@@ -55,7 +55,7 @@ public class L2 {
     }
 
     public String getPetValue() {
-        return $.nil(p) ? "{}" : String.valueOf(p);
+        return p.toString();
     }
 
     public int getKey() {

@@ -25,23 +25,25 @@ public class DBHelper {
 
     public void init(UltraPlayer player) {
         Player p = player.getPlayer();
-        try (SelectQuery.Binding b = connection.query().select().where("uuid", p.getUniqueId().toString()).execute()) {
-            if (!b.result.next()) {
-                connection.query().insert().insert("uuid").value(p.getUniqueId().toString()).execute();
-                connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
-            } else {
-                String username = b.result.getString("username");
-                if (username == null) {
+        if (!UltraPlayer.INDEX.containsKey(p.getUniqueId())) {
+            try (SelectQuery.Binding b = connection.query().select().where("uuid", p.getUniqueId().toString()).execute()) {
+                if (!b.result.next()) {
+                    connection.query().insert().insert("uuid").value(p.getUniqueId().toString()).execute();
                     connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
-                    return;
+                } else {
+                    String username = b.result.getString("username");
+                    if (username == null) {
+                        connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
+                        return;
+                    }
+                    if (!username.equals(p.getName())) {
+                        connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
+                    }
+                    UltraPlayer.putIndexId(p, b.result.getInt("id"));
                 }
-                if (!username.equals(p.getName())) {
-                    connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
-                }
-                UltraPlayer.putIndexId(p, b.result.getInt("id"));
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -76,7 +78,7 @@ public class DBHelper {
     }
 
     public void setPetName(int index, String pet, String name) {
-        val ignore = getPetName(index, pet); // pre-load
+        getPetName(index, pet); // pre-load
         try {
             L2 l2 = L2Pool.get(index);
             l2.setPetName(pet, name);
@@ -140,8 +142,8 @@ public class DBHelper {
         try {
             connection.query().update().set(name.replace("_", ""), value).where("id", index).execute();
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            $.log(e);
+        }// Update l2cache even if db update failed
         L2Pool.get(index).setAmmo(name, value);
     }
 

@@ -40,6 +40,7 @@ import be.isach.ultracosmetics.menu.SuitManager;
 import be.isach.ultracosmetics.mysql.DBConnection;
 import be.isach.ultracosmetics.mysql.DBHelper;
 import be.isach.ultracosmetics.mysql.DBSpec;
+import be.isach.ultracosmetics.mysql.SingleExecutor;
 import be.isach.ultracosmetics.run.FallDamageManager;
 import be.isach.ultracosmetics.run.InvalidWorldManager;
 import be.isach.ultracosmetics.util.BlockUtils;
@@ -77,6 +78,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by sacha on 03/08/15.
@@ -235,6 +238,8 @@ public class Main extends JavaPlugin {
      * Server version manager
      */
     private VersionManager versionManager;
+
+    private SingleExecutor exec;
 
     /**
      * Called when plugin is enabled.
@@ -742,6 +747,8 @@ public class Main extends JavaPlugin {
                 connection.init();
 
                 db = new DBHelper(connection);
+
+                exec = new SingleExecutor(new LinkedBlockingQueue<>());
             } catch (Exception e) {
 
                 Bukkit.getLogger().info("");
@@ -932,6 +939,15 @@ public class Main extends JavaPlugin {
             versionManager.getModule().disable();
         } catch (Exception e) {
         }
+
+        if (!$.nil(exec)) {
+            exec.shutdown();
+            try {
+                exec.awaitTermination(1, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                $.log(e);
+            }
+        }
     }
 
     /**
@@ -939,6 +955,14 @@ public class Main extends JavaPlugin {
      */
     public CommandManager getCommandManager() {
         return commandManager;
+    }
+
+    public static void exec(Runnable r) {
+        if ($.nil(main.exec)) {
+            main.getServer().getScheduler().runTaskAsynchronously(main, r);
+        } else {
+            main.exec.execute(r);
+        }
     }
 
     public static int index(OfflinePlayer p) {

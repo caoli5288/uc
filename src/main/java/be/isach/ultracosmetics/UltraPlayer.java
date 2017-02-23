@@ -34,7 +34,7 @@ import java.util.UUID;
 
 public class UltraPlayer {
 
-    private static final Map<UUID, Integer> INDEX = new HashMap<>(); // TODO not flush yet, change if any issue
+    public static final Map<UUID, Integer> INDEX = new HashMap<>(); // TODO not flush yet, change if any issue
 
     private Player player;
     public UUID id;

@@ -1,7 +1,11 @@
 package be.isach.ultracosmetics.cosmetics.gadgets;
 
 import be.isach.ultracosmetics.Main;
-import be.isach.ultracosmetics.util.*;
+import be.isach.ultracosmetics.util.MathUtils;
+import be.isach.ultracosmetics.util.Particles;
+import be.isach.ultracosmetics.util.SoundUtil;
+import be.isach.ultracosmetics.util.Sounds;
+import be.isach.ultracosmetics.util.UtilParticles;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Bat;
@@ -34,7 +38,7 @@ public class GadgetBatBlaster extends Gadget {
         this.bats.put(getPlayer(), new ArrayList());
 
         for (int i = 0; i < 16; i++) {
-            ((ArrayList) this.bats.get(getPlayer())).add(getPlayer().getWorld().spawn(getPlayer().getEyeLocation(), Bat.class));
+            this.bats.get(getPlayer()).add(getPlayer().getWorld().spawn(getPlayer().getEyeLocation(), Bat.class));
         }
         Bukkit.getScheduler().runTaskLaterAsynchronously(Main.getInstance(), new Runnable() {
             @Override
