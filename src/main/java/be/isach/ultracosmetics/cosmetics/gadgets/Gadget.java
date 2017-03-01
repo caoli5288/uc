@@ -150,7 +150,7 @@ public abstract class Gadget implements Listener {
                     }
                 }
             };
-            runnable.runTaskTimerAsynchronously(Main.getInstance(), 0, 1);
+            runnable.runTaskTimerAsynchronously(Main.getInstance(), 0, 10);
             listener = new GadgetListener(this);
             Main.getInstance().registerListener(listener);
             Main.getInstance().registerListener(this);

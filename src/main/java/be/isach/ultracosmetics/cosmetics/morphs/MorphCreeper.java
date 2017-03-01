@@ -86,7 +86,7 @@ public class MorphCreeper extends Morph {
 
 
                 }
-            }.runTaskTimer(Main.getInstance(), 0, 1);
+            }.runTaskTimer(Main.getInstance(), 0, 10);
         }
     }
 }
