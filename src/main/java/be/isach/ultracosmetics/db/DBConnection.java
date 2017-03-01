@@ -1,4 +1,4 @@
-package be.isach.ultracosmetics.mysql;
+package be.isach.ultracosmetics.db;
 
 import be.isach.ultracosmetics.$;
 import be.isach.ultracosmetics.config.SettingsManager;
@@ -26,54 +26,35 @@ public class DBConnection {
      */
     private Connection connection;
 
-    public static final String TABLE = "CREATE TABLE IF NOT EXISTS UltraCosmeticsData(" +
-            "id INTEGER not NULL AUTO_INCREMENT," +
-            " uuid VARCHAR(255)," +
-            " username VARCHAR(255)," +
-            " PRIMARY KEY ( id ))";
+    public static final String TABLE = "CREATE TABLE " +
+            "IF NOT EXISTS `UltraCosmeticsData` (" +
+            "  `id` INT NOT NULL AUTO_INCREMENT," +
+            "  `uuid` CHAR (36) NOT NULL," +
+            "  `username` CHAR (16) NOT NULL," +
+            "  `treasureKeys` INT NOT NULL," +
+            "  `gadgetsEnabled` INT NOT NULL DEFAULT 1," +
+            "  `selfmorphview` INT NOT NULL DEFAULT 1," +
+            "  `pet_name` CHAR (255)," +
+            "  PRIMARY KEY (`id`)," +
+            "  INDEX `idx_uuid` (`uuid`, `username`)" +
+            ");";
 
     public void init() {
-        Connection connection = conn();
         try {
+            Connection connection = conn();
             try (Statement st = connection.createStatement()) {
                 st.executeUpdate(TABLE);
+            } catch (SQLException e) {
+                e.printStackTrace();
             }
             DatabaseMetaData d = connection.getMetaData();
             for (val type : GadgetType.values()) {
                 try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", type.toString().replace("_", "").toLowerCase())) {
                     if (!r.next()) {
-                        try (PreparedStatement st = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD " + type.toString().replace("_", "").toLowerCase() + " INTEGER DEFAULT 0 not NULL")) {
+                        try (PreparedStatement st = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD " + type.toString().replace("_", "").toLowerCase() + " INT DEFAULT 0 not NULL")) {
                             st.executeUpdate();
                         }
                     }
-                }
-            }
-            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "gadgetsEnabled")) {
-                if (!r.next()) {
-                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD gadgetsEnabled INT NOT NULL DEFAULT 1");
-                    statement.executeUpdate();
-                    statement.close();
-                }
-            }
-            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "selfmorphview")) {
-                if (!r.next()) {
-                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD selfmorphview INT NOT NULL DEFAULT 1");
-                    statement.executeUpdate();
-                    statement.close();
-                }
-            }
-            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "treasureKeys")) {
-                if (!r.next()) {
-                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD treasureKeys INTEGER DEFAULT 0 NOT NULL");
-                    statement.executeUpdate();
-                    statement.close();
-                }
-            }
-            try (ResultSet r = d.getColumns(null, null, "UltraCosmeticsData", "pet_name")) {
-                if (!r.next()) {
-                    PreparedStatement statement = connection.prepareStatement("ALTER TABLE UltraCosmeticsData ADD pet_name TEXT");
-                    statement.executeUpdate();
-                    statement.close();
                 }
             }
         } catch (SQLException e) {

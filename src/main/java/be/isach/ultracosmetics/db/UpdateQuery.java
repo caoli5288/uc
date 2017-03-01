@@ -1,4 +1,4 @@
-package be.isach.ultracosmetics.mysql;
+package be.isach.ultracosmetics.db;
 
 import be.isach.ultracosmetics.Main;
 import lombok.val;
@@ -60,7 +60,7 @@ public class UpdateQuery extends Query {
 
     public void execute() throws SQLException {
         if (Bukkit.isPrimaryThread()) {// Not block main thread
-            Main.exec(this::exec);
+            Main.runAsync(this::exec);
             Main.debug("DEBUG #1 ASYNC " + sql.toUpperCase());
         } else {
             try {

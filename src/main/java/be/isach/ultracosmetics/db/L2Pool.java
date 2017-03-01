@@ -1,11 +1,11 @@
-package be.isach.ultracosmetics.mysql;
+package be.isach.ultracosmetics.db;
 
 import be.isach.ultracosmetics.$;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static be.isach.ultracosmetics.mysql.L2Pool.Hold.POOL;
+import static be.isach.ultracosmetics.db.L2Pool.Hold.POOL;
 
 /**
  * Created on 17-2-23.

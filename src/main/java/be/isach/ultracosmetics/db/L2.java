@@ -1,4 +1,4 @@
-package be.isach.ultracosmetics.mysql;
+package be.isach.ultracosmetics.db;
 
 import be.isach.ultracosmetics.$;
 import org.json.simple.JSONObject;

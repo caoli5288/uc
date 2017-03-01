@@ -1,4 +1,4 @@
-package be.isach.ultracosmetics.mysql;
+package be.isach.ultracosmetics.db;
 
 import be.isach.ultracosmetics.$;
 import be.isach.ultracosmetics.Main;
@@ -27,10 +27,13 @@ public class DBHelper {
     public void init(UltraPlayer player) {
         Player p = player.getPlayer();
         if (!UltraPlayer.INDEX.containsKey(p.getUniqueId())) {
-            try (val b = connection.query().select().where("uuid", p.getUniqueId().toString()).execute()) {
+            try (val b = connection.query().select("id,uuid,username").where("uuid", p.getUniqueId().toString()).execute()) {
                 if (!b.result.next()) {
-                    connection.query().insert().insert("uuid").value(p.getUniqueId().toString()).execute();
-                    connection.query().update().set("username", p.getName()).where("uuid", p.getUniqueId().toString()).execute();
+                    try (val st = connection.conn().prepareStatement("INSERT INTO `UltraCosmeticsData` (`uuid`,`username`) VALUES (?,?);")) {
+                        st.setString(1, String.valueOf(p.getUniqueId()));
+                        st.setString(2, p.getName());
+                        st.executeUpdate();
+                    }
                 } else {
                     String username = b.result.getString("username");
                     if (username == null) {
@@ -160,9 +163,9 @@ public class DBHelper {
         setAmmo(index, name, getAmmo(index, name) + i);
     }
 
-    public void save(L2 l2) {
+    public void saveGadgetEnabled(int index, int enabled) {
         try {
-            connection.query().update().set("gadgetsEnabled", l2.getGadget()).where("id", l2.getId()).execute();
+            connection.query().update().set("gadgetsEnabled", enabled).where("id", index).execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }

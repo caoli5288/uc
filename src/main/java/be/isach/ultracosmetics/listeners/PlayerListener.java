@@ -3,8 +3,8 @@ package be.isach.ultracosmetics.listeners;
 import be.isach.ultracosmetics.Main;
 import be.isach.ultracosmetics.UltraPlayer;
 import be.isach.ultracosmetics.config.SettingsManager;
-import be.isach.ultracosmetics.mysql.L2;
-import be.isach.ultracosmetics.mysql.L2Pool;
+import be.isach.ultracosmetics.db.L2;
+import be.isach.ultracosmetics.db.L2Pool;
 import be.isach.ultracosmetics.run.FallDamageManager;
 import be.isach.ultracosmetics.util.ItemFactory;
 import org.bukkit.Bukkit;
@@ -145,7 +145,9 @@ public class PlayerListener implements Listener {
         Main.getPlayerManager().getUltraPlayer(p).removeMenuItem();
         Main.getPlayerManager().remove(p);
         L2 l2 = L2Pool.get(Main.index(p));
-        Main.db.save(l2);
+        if (l2.getGadget() > -1) {
+            Main.db.saveGadgetEnabled(l2.getId(), l2.getGadget());
+        }
         L2Pool.del(l2);
     }
 

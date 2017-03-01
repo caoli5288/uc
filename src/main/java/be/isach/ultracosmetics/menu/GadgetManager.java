@@ -7,7 +7,6 @@ import be.isach.ultracosmetics.config.SettingsManager;
 import be.isach.ultracosmetics.cosmetics.Category;
 import be.isach.ultracosmetics.cosmetics.gadgets.GadgetType;
 import be.isach.ultracosmetics.util.ItemFactory;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -168,24 +167,20 @@ public class GadgetManager implements Listener {
         return null;
     }
 
-    public static void equipGadget(final GadgetType type, final Player PLAYER) {
-        if (!PLAYER.hasPermission(type.getPermission())) {
-            if (!playerList.contains(PLAYER)) {
-                PLAYER.sendMessage(MessageManager.getMessage("No-Permission"));
-                playerList.add(PLAYER);
-                Bukkit.getScheduler().runTaskLaterAsynchronously(Main.getInstance(), new Runnable() {
-                    @Override
-                    public void run() {
-                        playerList.remove(PLAYER);
-                    }
-                }, 1);
+    public static void equipGadget(final GadgetType type, final Player player) {
+        if (!player.hasPermission(type.getPermission())) {
+            if (!playerList.contains(player)) {
+                player.sendMessage(MessageManager.getMessage("No-Permission"));
+                playerList.add(player);
+                Main.run(1, () -> playerList.remove(player));
             }
             return;
         }
+        // 下面这段我也不知道为啥放线程池里面就炸了
         new Thread() {
             @Override
             public void run() {
-                type.equip(PLAYER);
+                type.equip(player);
             }
         }.run();
     }

@@ -23,6 +23,9 @@ import be.isach.ultracosmetics.cosmetics.pets.IPlayerFollower;
 import be.isach.ultracosmetics.cosmetics.pets.Pet;
 import be.isach.ultracosmetics.cosmetics.pets.PetType;
 import be.isach.ultracosmetics.cosmetics.suits.SuitType;
+import be.isach.ultracosmetics.db.DBConnection;
+import be.isach.ultracosmetics.db.DBHelper;
+import be.isach.ultracosmetics.db.SingleExecutor;
 import be.isach.ultracosmetics.listeners.MainListener;
 import be.isach.ultracosmetics.listeners.PlayerListener;
 import be.isach.ultracosmetics.listeners.v1_9.PlayerSwapItemListener;
@@ -37,10 +40,6 @@ import be.isach.ultracosmetics.menu.MountManager;
 import be.isach.ultracosmetics.menu.ParticleEffectManager;
 import be.isach.ultracosmetics.menu.PetManager;
 import be.isach.ultracosmetics.menu.SuitManager;
-import be.isach.ultracosmetics.mysql.DBConnection;
-import be.isach.ultracosmetics.mysql.DBHelper;
-import be.isach.ultracosmetics.mysql.DBSpec;
-import be.isach.ultracosmetics.mysql.SingleExecutor;
 import be.isach.ultracosmetics.run.FallDamageManager;
 import be.isach.ultracosmetics.run.InvalidWorldManager;
 import be.isach.ultracosmetics.util.BlockUtils;
@@ -80,6 +79,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static be.isach.ultracosmetics.$.nil;
 
 /**
  * Created by sacha on 03/08/15.
@@ -229,23 +230,19 @@ public class Main extends JavaPlugin {
      */
     private static PlayerManager playerManager;
 
-    /**
-     * MySQL Stuff.
-     */
-    private DBSpec sql;
+    private static SingleExecutor exec;
 
     /**
      * Server version manager
      */
     private VersionManager versionManager;
 
-    private SingleExecutor exec;
-
     /**
      * Called when plugin is enabled.
      */
     @Override
     public void onEnable() {
+        main = this;
         if (!getServer().getVersion().contains("1.8.8") && !getServer().getVersion().contains("1.9") && !getServer().getVersion().contains("1.10")) {
             System.out.println("----------------------------\n\nUltraCosmetics requires Spigot 1.8.8 or 1.9 to work!\n\n----------------------------");
             getServer().getPluginManager().disablePlugin(this);
@@ -352,9 +349,6 @@ public class Main extends JavaPlugin {
 
         log("Configuration loaded.");
         log("");
-
-        main = this;
-
         log("Initializing module " + serverVersion);
         versionManager = new VersionManager(serverVersion);
         try {
@@ -745,12 +739,11 @@ public class Main extends JavaPlugin {
     private void startMySQL() {
         if (!fileStorage) {
             try {
+                exec = new SingleExecutor(new LinkedBlockingQueue<>());
                 DBConnection connection = new DBConnection();
                 connection.init();
 
                 db = new DBHelper(connection);
-
-                exec = new SingleExecutor(new LinkedBlockingQueue<>());
             } catch (Exception e) {
 
                 Bukkit.getLogger().info("");
@@ -942,7 +935,7 @@ public class Main extends JavaPlugin {
         } catch (Exception e) {
         }
 
-        if (!$.nil(exec)) {
+        if (!nil(exec)) {
             exec.shutdown();
             try {
                 exec.awaitTermination(1, TimeUnit.MINUTES);
@@ -959,11 +952,11 @@ public class Main extends JavaPlugin {
         return commandManager;
     }
 
-    public static void exec(Runnable r) {
-        if ($.nil(main.exec)) {
-            main.getServer().getScheduler().runTaskAsynchronously(main, r);
+    public static void runAsync(Runnable r) {
+        if (nil(exec)) {
+            Bukkit.getScheduler().runTaskAsynchronously(main, r);
         } else {
-            main.exec.execute(r);
+            exec.execute(r);
         }
     }
 
@@ -976,6 +969,10 @@ public class Main extends JavaPlugin {
             Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), customBackMenuCommand.replace("{player}", whoClicked.getName()));
         else
             MainMenuManager.openMenu(whoClicked);
+    }
+
+    public static void run(int i, Runnable r) {
+        Bukkit.getScheduler().runTaskLater(main, r, i);
     }
 
 }
