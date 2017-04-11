@@ -45,10 +45,10 @@ public enum ParticleEffectType {
     public static List<ParticleEffectType> enabled = new ArrayList<>();
     private Class<? extends ParticleEffect> clazz;
 
-    ParticleEffectType(String permission, String configName, int repeatDelay, Particles effect, Material material, byte data, Class<? extends ParticleEffect> clazz, String defaultDesc) {
+    ParticleEffectType(String permission, String configName, int _repeat, Particles effect, Material material, byte data, Class<? extends ParticleEffect> clazz, String defaultDesc) {
         this.permission = "ultracosmetics.particleeffects." + permission;
         this.configName = configName;
-        this.repeatDelay = repeatDelay;
+        this.repeatDelay = ParticleEffectValue.getRepeat(configName.toLowerCase());
         this.effect = effect;
         this.material = material;
         this.data = data;

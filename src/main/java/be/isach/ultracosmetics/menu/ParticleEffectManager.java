@@ -148,26 +148,16 @@ public class ParticleEffectManager implements Listener {
         return 0;
     }
 
-    public static void equipEffect(final ParticleEffectType TYPE, final Player PLAYER) {
-        if (!PLAYER.hasPermission(TYPE.getPermission())) {
-            if (!playerList.contains(PLAYER)) {
-                PLAYER.sendMessage(MessageManager.getMessage("No-Permission"));
-                playerList.add(PLAYER);
-                Bukkit.getScheduler().runTaskLaterAsynchronously(Main.getInstance(), new Runnable() {
-                    @Override
-                    public void run() {
-                        playerList.remove(PLAYER);
-                    }
-                }, 1);
+    public static void equipEffect(final ParticleEffectType type, final Player player) {
+        if (!player.hasPermission(type.getPermission())) {
+            if (!playerList.contains(player)) {
+                player.sendMessage(MessageManager.getMessage("No-Permission"));
+                playerList.add(player);
+                Bukkit.getScheduler().runTaskLaterAsynchronously(Main.getInstance(), () -> playerList.remove(player), 1);
             }
             return;
         }
-        new Thread() {
-            @Override
-            public void run() {
-                TYPE.equip(PLAYER);
-            }
-        }.run();
+        new Thread(() -> type.equip(player)).run();
     }
 
     public static ParticleEffectType getEffect(String name) {
