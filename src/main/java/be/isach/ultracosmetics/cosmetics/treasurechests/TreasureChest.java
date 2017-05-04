@@ -2,8 +2,14 @@ package be.isach.ultracosmetics.cosmetics.treasurechests;
 
 import be.isach.ultracosmetics.Main;
 import be.isach.ultracosmetics.config.MessageManager;
-import be.isach.ultracosmetics.util.*;
+import be.isach.ultracosmetics.util.BlockUtils;
+import be.isach.ultracosmetics.util.MathUtils;
+import be.isach.ultracosmetics.util.Particles;
+import be.isach.ultracosmetics.util.ServerVersion;
 import be.isach.ultracosmetics.util.SoundUtil;
+import be.isach.ultracosmetics.util.Sounds;
+import be.isach.ultracosmetics.util.UtilParticles;
+import lombok.val;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -27,7 +33,13 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import static be.isach.ultracosmetics.$.nil;
 
 public class TreasureChest implements Listener {
 
@@ -319,8 +331,9 @@ public class TreasureChest implements Listener {
             }
             for (Entity ent : this.items)
                 ent.remove();
-            this.RUNNABLES[0].cancel();
-            this.RUNNABLES[1].cancel();
+            for (val r : RUNNABLES) {
+                if (!nil(r)) r.cancel();
+            }
             this.items.clear();
             this.chests.clear();
             this.holograms.clear();
